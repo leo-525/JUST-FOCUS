@@ -178,7 +178,6 @@
       let deadline = 0;
       let startedAt = 0;
       let targetSeconds = 0;
-      let pausedSeconds = 0;
       let audioContext = null;
       let celebrationInterval = null;
       let celebrationStartedAt = 0;
@@ -229,7 +228,7 @@
         showPicker(false);
         mode = 'focus';
         square.hidden = false;
-        square.setAttribute('aria-label', '일시정지');
+        square.setAttribute('aria-label', '타이머 종료');
         targetSeconds = seconds;
         startedAt = Date.now();
         deadline = startedAt + targetSeconds * 1000;
@@ -288,22 +287,40 @@
         celebrationInterval = requestAnimationFrame(move);
       }
 
-      function pauseFocus() {
+      function stopFocus() {
         if (mode !== 'focus') return;
-        pausedSeconds = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+        const elapsed = Math.min(targetSeconds, Math.max(0, Math.floor((Date.now() - startedAt) / 1000)));
         clearClock();
-        mode = 'paused';
-        time.textContent = format(pausedSeconds);
-        square.setAttribute('aria-label', '타이머 재개');
+        mode = 'idle';
+        square.hidden = true;
+        square.setAttribute('aria-label', '타이머 종료');
+        time.hidden = true;
+        setFill(1);
+        message.textContent = elapsedMessage(elapsed);
       }
 
-      function resumeFocus() {
-        if (mode !== 'paused') return;
-        mode = 'focus';
-        deadline = Date.now() + pausedSeconds * 1000;
-        square.setAttribute('aria-label', '일시정지');
-        tickFocus();
-        if (mode === 'focus') interval = window.setInterval(tickFocus, 200);
+      function playClickSound() {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        try {
+          audioContext = audioContext || new AudioContextClass();
+          if (audioContext.state === 'suspended') audioContext.resume();
+          const oscillator = audioContext.createOscillator();
+          const gain = audioContext.createGain();
+          const now = audioContext.currentTime;
+          oscillator.type = 'sine';
+          oscillator.frequency.setValueAtTime(740, now);
+          oscillator.frequency.exponentialRampToValueAtTime(520, now + 0.055);
+          gain.gain.setValueAtTime(0.0001, now);
+          gain.gain.exponentialRampToValueAtTime(0.045, now + 0.008);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.07);
+          oscillator.connect(gain);
+          gain.connect(audioContext.destination);
+          oscillator.start(now);
+          oscillator.stop(now + 0.075);
+        } catch (_) {
+          // Click feedback is optional when audio is unavailable.
+        }
       }
 
       function resetToIdle() {
@@ -333,21 +350,22 @@
       }
 
       triangle.addEventListener('click', () => {
+        playClickSound();
         if (mode === 'celebrating') {
           resetToIdle();
           return;
         }
-        if (mode === 'focus' || mode === 'paused') return;
+        if (mode === 'focus') return;
         showPicker(picker.hidden);
       });
 
       square.addEventListener('click', () => {
+        playClickSound();
         if (mode === 'celebrating') {
           resetToIdle();
           return;
         }
-        if (mode === 'focus') pauseFocus();
-        else if (mode === 'paused') resumeFocus();
+        stopFocus();
       });
 
       // 떴다 떴다 비행기 멜로디를 밝은 음색으로 재생합니다.
