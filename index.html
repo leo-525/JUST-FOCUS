@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f3ed">
+  <title>JUST FOCUS</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #24342e;
+      --muted: #718078;
+      --paper: #f5f3ed;
+      --green: #477a60;
+      --line: #dce2da;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+      padding: 28px 20px;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse at 50% 35%, #ffffff 0, #f8f7f2 40%, var(--paper) 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      isolation: isolate;
+      overflow-x: hidden;
+    }
+    .orbs { position: fixed; inset: 0; overflow: hidden; z-index: -1; pointer-events: none; }
+    .orb { position: absolute; display: block; border-radius: 50%; opacity: .62; }
+    .orb:nth-child(1) { width: 190px; height: 190px; left: 7%; top: 9%; background: #91c99b; }
+    .orb:nth-child(2) { width: 88px; height: 88px; left: 21%; top: 26%; background: #48a866; opacity: .48; }
+    .orb:nth-child(3) { width: 270px; height: 270px; right: -65px; top: 11%; background: #b4dcae; }
+    .orb:nth-child(4) { width: 120px; height: 120px; right: 17%; top: 34%; background: #63b878; opacity: .4; }
+    .orb:nth-child(5) { width: 310px; height: 310px; left: -105px; bottom: -90px; background: #a8d79f; }
+    .orb:nth-child(6) { width: 150px; height: 150px; left: 25%; bottom: 8%; background: #54ae69; opacity: .44; }
+    .orb:nth-child(7) { width: 230px; height: 230px; right: 6%; bottom: -45px; background: #8bcc8a; opacity: .68; }
+    .orb:nth-child(8) { width: 54px; height: 54px; right: 33%; top: 12%; background: #33884e; opacity: .34; }
+    .orb:nth-child(9) { width: 34px; height: 34px; left: 13%; bottom: 31%; background: #348b4e; opacity: .38; }
+    main { width: min(100%, 680px); text-align: center; }
+    .eyebrow {
+      margin: 0 0 14px;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .2em;
+    }
+    h1 { margin: 0; font-size: clamp(26px, 5vw, 38px); font-weight: 650; letter-spacing: -.06em; }
+    .message {
+      min-height: 54px;
+      margin: 13px 0 35px;
+      color: var(--muted);
+      font-size: clamp(15px, 2.4vw, 18px);
+      line-height: 1.6;
+    }
+    .time {
+      margin: 0 0 10px;
+      font-variant-numeric: tabular-nums;
+      font-size: clamp(48px, 12vw, 82px);
+      font-weight: 550;
+      letter-spacing: -.07em;
+      line-height: 1.1;
+    }
+    .time[hidden] { display: none; }
+    .actions { display: flex; justify-content: center; align-items: center; gap: clamp(34px, 8vw, 64px); }
+    .control {
+      display: grid;
+      place-items: center;
+      width: clamp(64px, 10vw, 100px);
+      height: clamp(64px, 10vw, 100px);
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      color: var(--green);
+      background: transparent;
+      cursor: pointer;
+      transition: transform .18s ease, background .18s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .control:hover { transform: translateY(-3px); background: #e9eee8; }
+    .control[hidden] { display: none; }
+    .control:active { transform: scale(.94); }
+    .control:focus-visible, .minute:focus-visible { outline: 3px solid #8dad98; outline-offset: 5px; }
+    .control svg { width: 100%; height: 100%; overflow: visible; }
+    .triangle-back { fill: currentColor; opacity: .13; }
+    .triangle-fill { fill: currentColor; transition: opacity .5s linear; }
+    .square-shape { fill: currentColor; }
+    .picker {
+      width: min(100%, 420px);
+      margin: 30px auto 0;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgb(255 255 255 / 72%);
+      box-shadow: 0 14px 40px rgb(39 62 48 / 7%);
+      animation: arrive .2s ease-out;
+    }
+    .picker[hidden] { display: none; }
+    .minutes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+    .demo-timer {
+      width: 100%;
+      min-height: 48px;
+      margin-bottom: 10px;
+      border: 1px solid #a9c4ae;
+      border-radius: 14px;
+      color: var(--green);
+      background: #edf5ed;
+      font: inherit;
+      font-size: 16px;
+      font-weight: 650;
+      cursor: pointer;
+      transition: background .15s, transform .15s;
+    }
+    .demo-timer:hover { background: #e3efe4; transform: translateY(-1px); }
+    .minute {
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      color: var(--ink);
+      background: #fbfcf9;
+      font: inherit;
+      font-size: 17px;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, transform .15s;
+    }
+    .minute:hover { border-color: #9fb5a4; background: #edf3ed; transform: translateY(-1px); }
+    .minutes-celebrating .control { position: fixed; left: 0; top: 0; z-index: 5; width: clamp(64px, 10vw, 100px); height: clamp(64px, 10vw, 100px); animation: none; will-change: transform; }
+    .minutes-celebrating #triangle .triangle-fill { animation: reappear .45s ease-out both; }
+    @keyframes reappear { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes arrive { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+      .minutes-celebrating .control { animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="orbs" aria-hidden="true"><i class="orb"></i><i class="orb"></i><i class="orb"></i><i class="orb"></i><i class="orb"></i><i class="orb"></i><i class="orb"></i><i class="orb"></i><i class="orb"></i></div>
+  <main>
+    <h1 id="title">JUST FOCUS</h1>
+    <p class="message" id="message" aria-live="polite"></p>
+    <p class="time" id="time" aria-live="off" hidden>00:00</p>
+
+    <div class="actions" aria-label="타이머 조작">
+      <button class="control" id="triangle" type="button" aria-label="집중 시간 고르기" aria-haspopup="true" aria-expanded="false">
+        <svg viewBox="0 0 100 100" role="img" aria-hidden="true">
+          <defs><clipPath id="triangleClip"><polygon points="50,9 94,88 6,88" /></clipPath></defs>
+          <polygon class="triangle-back" points="50,9 94,88 6,88" />
+          <polygon class="triangle-fill" id="triangleFill" points="50,9 94,88 6,88" clip-path="url(#triangleClip)" />
+        </svg>
+      </button>
+      <button class="control" id="square" type="button" aria-label="일시정지" hidden>
+        <svg viewBox="0 0 100 100" role="img" aria-hidden="true"><rect class="square-shape" x="12" y="12" width="76" height="76" rx="10" /></svg>
+      </button>
+    </div>
+    <section class="picker" id="picker" aria-label="집중 시간 선택" hidden>
+      <button class="demo-timer" id="demoTimer" type="button">10초 시범</button>
+      <div class="minutes" id="minutes"></div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const triangle = document.getElementById('triangle');
+      const square = document.getElementById('square');
+      const picker = document.getElementById('picker');
+      const demoTimer = document.getElementById('demoTimer');
+      const minutes = document.getElementById('minutes');
+      const message = document.getElementById('message');
+      const title = document.getElementById('title');
+      const time = document.getElementById('time');
+      const fill = document.getElementById('triangleFill');
+      const actions = document.querySelector('.actions');
+      let mode = 'idle';
+      let interval = null;
+      let deadline = 0;
+      let startedAt = 0;
+      let targetSeconds = 0;
+      let pausedSeconds = 0;
+      let audioContext = null;
+      let celebrationInterval = null;
+      let celebrationStartedAt = 0;
+
+      for (let n = 10; n <= 60; n += 10) {
+        const button = document.createElement('button');
+        button.className = 'minute';
+        button.type = 'button';
+        button.textContent = String(n);
+        button.addEventListener('click', () => beginFocus(n * 60));
+        minutes.appendChild(button);
+      }
+      demoTimer.addEventListener('click', () => beginFocus(10));
+
+      function showPicker(show) {
+        picker.hidden = !show;
+        triangle.setAttribute('aria-expanded', String(show));
+      }
+
+      function format(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      }
+
+      function elapsedMessage(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        if (mins === 0) return `${secs}초 집중했어요!`;
+        if (secs === 0) return `${mins}분 집중했어요!`;
+        return `${mins}분 ${secs}초 집중했어요!`;
+      }
+
+      function setFill(ratio) {
+        const remaining = Math.max(0, Math.min(1, ratio));
+        fill.style.opacity = String(remaining);
+        fill.style.transformOrigin = '50% 88%';
+        fill.style.transform = `scaleY(${remaining})`;
+      }
+
+      function clearClock() {
+        if (interval !== null) window.clearInterval(interval);
+        interval = null;
+      }
+
+      function beginFocus(seconds) {
+        clearClock();
+        showPicker(false);
+        mode = 'focus';
+        square.hidden = false;
+        square.setAttribute('aria-label', '일시정지');
+        targetSeconds = seconds;
+        startedAt = Date.now();
+        deadline = startedAt + targetSeconds * 1000;
+        time.hidden = false;
+        message.textContent = '';
+        setFill(1);
+        tickFocus();
+        interval = window.setInterval(tickFocus, 200);
+      }
+
+      function tickFocus() {
+        const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+        time.textContent = format(remaining);
+        setFill(remaining / targetSeconds);
+        if (remaining <= 0) finishFocus();
+      }
+
+      function finishFocus() {
+        clearClock();
+        mode = 'celebrating';
+        title.textContent = 'JUST CLICK TO STOP';
+        time.hidden = true;
+        setFill(1);
+        message.textContent = elapsedMessage(targetSeconds);
+        actions.classList.add('minutes-celebrating');
+        startCelebrationMotion();
+        triangle.setAttribute('aria-label', '춤 멈추기');
+        square.setAttribute('aria-label', '춤 멈추기');
+        playAirplaneMelody();
+      }
+
+      function startCelebrationMotion() {
+        const movers = [
+          { element: triangle, x: 80, y: 120, vx: 8, vy: 6, angle: 0, spin: 24 },
+          { element: square, x: 240, y: 260, vx: -7, vy: 8, angle: 0, spin: -29 },
+        ];
+        let previous = performance.now();
+        function move(now) {
+          if (mode !== 'celebrating') return;
+          const step = Math.min((now - previous) / 16.67, 2);
+          previous = now;
+          for (const mover of movers) {
+            const maxX = Math.max(0, innerWidth - mover.element.offsetWidth);
+            const maxY = Math.max(0, innerHeight - mover.element.offsetHeight);
+            mover.x += mover.vx * step;
+            mover.y += mover.vy * step;
+            if (mover.x <= 0 || mover.x >= maxX) mover.vx *= -1;
+            if (mover.y <= 0 || mover.y >= maxY) mover.vy *= -1;
+            mover.x = Math.max(0, Math.min(maxX, mover.x));
+            mover.y = Math.max(0, Math.min(maxY, mover.y));
+            mover.angle += mover.spin * step;
+            mover.element.style.transform = `translate(${mover.x}px, ${mover.y}px) rotate(${mover.angle}deg)`;
+          }
+          celebrationInterval = requestAnimationFrame(move);
+        }
+        celebrationInterval = requestAnimationFrame(move);
+      }
+
+      function pauseFocus() {
+        if (mode !== 'focus') return;
+        pausedSeconds = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+        clearClock();
+        mode = 'paused';
+        time.textContent = format(pausedSeconds);
+        square.setAttribute('aria-label', '타이머 재개');
+      }
+
+      function resumeFocus() {
+        if (mode !== 'paused') return;
+        mode = 'focus';
+        deadline = Date.now() + pausedSeconds * 1000;
+        square.setAttribute('aria-label', '일시정지');
+        tickFocus();
+        if (mode === 'focus') interval = window.setInterval(tickFocus, 200);
+      }
+
+      function resetToIdle() {
+        clearClock();
+        if (celebrationInterval !== null) cancelAnimationFrame(celebrationInterval);
+        celebrationInterval = null;
+        celebrationStartedAt = 0;
+        mode = 'idle';
+        title.textContent = 'JUST FOCUS';
+        square.hidden = true;
+        showPicker(false);
+        time.hidden = true;
+        message.textContent = '';
+        setFill(1);
+        actions.classList.remove('minutes-celebrating');
+        triangle.setAttribute('aria-label', '집중 시간 고르기');
+        square.setAttribute('aria-label', '집중 시작 또는 타이머 종료');
+        for (const control of [triangle, square]) {
+          control.style.removeProperty('position');
+          control.style.removeProperty('left');
+          control.style.removeProperty('top');
+          control.style.removeProperty('z-index');
+          control.style.removeProperty('width');
+          control.style.removeProperty('height');
+          control.style.removeProperty('transform');
+        }
+      }
+
+      triangle.addEventListener('click', () => {
+        if (mode === 'celebrating') {
+          resetToIdle();
+          return;
+        }
+        if (mode === 'focus' || mode === 'paused') return;
+        showPicker(picker.hidden);
+      });
+
+      square.addEventListener('click', () => {
+        if (mode === 'celebrating') {
+          resetToIdle();
+          return;
+        }
+        if (mode === 'focus') pauseFocus();
+        else if (mode === 'paused') resumeFocus();
+      });
+
+      // 떴다 떴다 비행기 멜로디를 밝은 음색으로 재생합니다.
+      function playAirplaneMelody() {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        try {
+          audioContext = audioContext || new AudioContextClass();
+          if (audioContext.state === 'suspended') audioContext.resume();
+          const melody = [
+            60, 62, 64, 65, 67, 67, 67,
+            69, 69, 69, 67, 69, 69, 69, 67,
+            67, 67, 69, 69, 69, 67, 65, 65, 65,
+            64, 64, 64, 62, 62, 62, 60
+          ];
+          const beat = 0.24;
+          const start = audioContext.currentTime + 0.05;
+          melody.forEach((note, index) => {
+            const oscillator = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            const at = start + index * beat;
+            oscillator.type = 'sine';
+            oscillator.frequency.value = 440 * Math.pow(2, (note - 69) / 12);
+            gain.gain.setValueAtTime(0.0001, at);
+            gain.gain.exponentialRampToValueAtTime(0.13, at + 0.025);
+            gain.gain.exponentialRampToValueAtTime(0.0001, at + beat * 0.88);
+            oscillator.connect(gain);
+            gain.connect(audioContext.destination);
+            oscillator.start(at);
+            oscillator.stop(at + beat * 0.9);
+          });
+        } catch (_) {
+          // Audio may be disabled by the browser; the timer still completes normally.
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
